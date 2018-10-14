@@ -1,7 +1,7 @@
 import json
 from dataclasses import dataclass
 
-from abstract import MessageSerializer, Message
+from worker.abstract import MessageSerializer, Message
 
 
 @dataclass

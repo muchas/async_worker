@@ -1,10 +1,15 @@
 import asyncio
 import random
 
-from abstract import Consumer, Message
+from worker.abstract import Consumer, Message
 
 
-class SleepConsumer(Consumer):
+class ConstantSleepConsumer(Consumer):
+    async def consume(self, message: Message) -> None:
+        await asyncio.sleep(3)  # call to external service
+
+
+class RandomSleepConsumer(Consumer):
 
     async def consume(self, message: Message) -> None:
         await asyncio.sleep(0.2 + random.random())  # call to database
@@ -17,7 +22,9 @@ class SleepConsumer(Consumer):
 
 class SharedLockConsumer(Consumer):
 
+    def __init__(self, lock: asyncio.Lock) -> None:
+        self._lock = lock
+
     async def consume(self, message: Message) -> None:
-        # TODO: add lock, randomize
-        # TODO: simulate lock
-        await asyncio.sleep(3)
+        with self._lock.acquire():
+            await asyncio.sleep(3 + random.random())

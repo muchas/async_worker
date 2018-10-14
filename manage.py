@@ -1,15 +1,13 @@
-import asyncio
 import logging
 import sys
 
 import click
 
 from commons.asyncio import run_in_loop
-from consumers import SleepConsumer
-from processors import QueueProcessor
-from queues import InMemoryQueue
-from serializers import CreateOrderMessageSerializer
-
+from worker.consumers import RandomSleepConsumer
+from worker.processors import QueueProcessor
+from worker.queues import InMemoryQueue
+from worker.serializers import CreateOrderMessageSerializer
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
@@ -19,29 +17,23 @@ def cli() -> None:
     pass
 
 
-async def produce(queue: InMemoryQueue):
-    j = 0
-    while True:
-        for i in range(100):
-            queue.enqueue(f'{{"order_number": "{j}_{i}"}}')
-
-        await asyncio.sleep(1)
-        j += 1
-
-
-async def produce_and_consume(concurrency: int) -> None:
+async def consume_tasks(tasks_number: int, concurrency: int) -> None:
     queue = InMemoryQueue()
     serializer = CreateOrderMessageSerializer()
-    consumer = SleepConsumer()
+    consumer = RandomSleepConsumer()
     processor = QueueProcessor(queue, serializer, consumer, concurrency=concurrency)
 
-    await asyncio.gather(*[produce(queue), processor.consume()])
+    for i in range(tasks_number):
+        queue.enqueue(f'{{"order_number": "{i}"}}')
+
+    await processor.process()
 
 
 @cli.command()
-@click.option('--concurrency', default=500, help='limit of concurrent in-memory tasks')
-def worker(concurrency: int) -> None:
-    run_in_loop(produce_and_consume(concurrency))
+@click.option('--concurrency', default=50, help='limit of concurrent in-memory tasks')
+@click.option('--tasks', default=1000, help='number of tasks to consume')
+def worker(concurrency: int, tasks: int) -> None:
+    run_in_loop(consume_tasks(tasks, concurrency))
 
 
 commands = click.CommandCollection(sources=[cli])

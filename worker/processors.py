@@ -3,7 +3,7 @@ import logging
 from asyncio import Task
 from typing import Dict
 
-from abstract import MessageSerializer, Queue, Consumer, Job
+from worker.abstract import MessageSerializer, Queue, Consumer, Job
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ class QueueProcessor:
         self._tasks: Dict[int, Task] = {}
         self._is_running = True
 
-    async def consume(self) -> None:
+    async def process(self) -> None:
         while self._is_running:
             await self._schedule_pending_jobs()
             await asyncio.wait(self._tasks.values(), return_when=asyncio.FIRST_COMPLETED)
@@ -42,12 +42,12 @@ class QueueProcessor:
         while len(self._tasks) < self._jobs_limit:
             job = await self._queue.dequeue()
 
-            task = asyncio.create_task(self._process(job))
+            task = asyncio.create_task(self._process_job(job))
 
             self._tasks[id(task)] = task
             task.add_done_callback(self._handle_done_task)
 
-    async def _process(self, job: Job) -> None:
+    async def _process_job(self, job: Job) -> None:
         try:
             logger.debug('processing job message=%s processing_jobs=%s', job.raw_message, len(self._tasks))
 

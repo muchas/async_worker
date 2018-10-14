@@ -1,6 +1,6 @@
 import asyncio
 
-from abstract import Queue, Job
+from worker.abstract import Queue, Job
 
 
 class InMemoryJob(Job):
