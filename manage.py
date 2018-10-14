@@ -1,6 +1,7 @@
 import logging
 import signal
 import sys
+from time import sleep
 
 import click
 
@@ -60,7 +61,7 @@ async def consume_redis_tasks(concurrency: int) -> None:
     await redis.wait_closed()
 
 
-async def produce_redis_tasks(tasks_number: int) -> None:
+async def push_redis_tasks(tasks_number: int) -> None:
     redis = await get_redis()
     queue = RedisQueue(redis, key='orders')
 
@@ -79,15 +80,21 @@ def memory_worker(concurrency: int, tasks: int) -> None:
 
 
 @cli.command()
-@click.option('--tasks', default=1000, help='number of tasks to consume')
-def produce_redis_tasks(tasks: int) -> None:
-    run_in_loop(produce_redis_tasks(tasks))
+@click.option('--number', default=1000, help='number of tasks to consume')
+def produce_redis_tasks(number: int) -> None:
+    run_in_loop(push_redis_tasks(number))
 
 
 @cli.command()
 @click.option('--concurrency', default=50, help='limit of concurrent in-memory tasks')
 def redis_worker(concurrency: int) -> None:
     run_in_loop(consume_redis_tasks(concurrency))
+
+
+@cli.command()
+def keep_sleeping() -> None:
+    while True:
+        sleep(10)
 
 
 commands = click.CommandCollection(sources=[cli])

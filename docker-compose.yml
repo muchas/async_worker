@@ -1,0 +1,15 @@
+version: '2'
+services:
+  redis:
+    container_name: worker_redis
+    image: redis
+
+  worker:
+    container_name: worker
+    build: .
+    volumes:
+      - .:/code
+    links:
+      - redis
+volumes:
+  code:

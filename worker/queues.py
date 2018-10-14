@@ -44,5 +44,5 @@ class RedisQueue(Queue):
         await self._redis.rpush(self._key, raw_task)
 
     async def dequeue(self) -> Job:
-        task = await self._redis.blpop(self._key)
+        key, task = await self._redis.blpop(self._key)
         return SimpleJob(task)
