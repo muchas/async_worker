@@ -18,13 +18,3 @@ class RandomSleepConsumer(Consumer):
         await asyncio.sleep(1 + random.random() * 3)  # call to external service
 
         await asyncio.sleep(0.2 + random.random())  # call to database again
-
-
-class SharedLockConsumer(Consumer):
-
-    def __init__(self, lock: asyncio.Lock) -> None:
-        self._lock = lock
-
-    async def consume(self, message: Message) -> None:
-        with self._lock.acquire():
-            await asyncio.sleep(3 + random.random())

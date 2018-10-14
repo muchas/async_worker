@@ -16,6 +16,8 @@ class QueueProcessor:
     This class is a proof of concept.
     """
 
+    DEQUEUE_TIMEOUT = 5
+
     def __init__(self,
                  queue: Queue,
                  serializer: MessageSerializer,
@@ -30,8 +32,11 @@ class QueueProcessor:
 
     async def process(self) -> None:
         while self._is_running:
-            await self._schedule_pending_jobs()
-            await asyncio.wait(self._tasks.values(), return_when=asyncio.FIRST_COMPLETED)
+            try:
+                await self._schedule_pending_jobs()
+                await asyncio.wait(self._tasks.values(), return_when=asyncio.FIRST_COMPLETED)
+            except asyncio.TimeoutError:
+                logger.debug('scheduling timeout occurred')
 
         await asyncio.gather(*self._tasks.values())  # wait for tasks that have not finished yet
 
@@ -40,7 +45,7 @@ class QueueProcessor:
 
     async def _schedule_pending_jobs(self) -> None:
         while len(self._tasks) < self._jobs_limit:
-            job = await self._queue.dequeue()
+            job = await asyncio.wait_for(self._queue.dequeue(), timeout=self.DEQUEUE_TIMEOUT)
 
             task = asyncio.create_task(self._process_job(job))
 
