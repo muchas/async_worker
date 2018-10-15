@@ -12,9 +12,6 @@ class ConstantSleepConsumer(Consumer):
 class RandomSleepConsumer(Consumer):
 
     async def consume(self, message: Message) -> None:
-        await asyncio.sleep(0.2 + random.random())  # call to database
-
-        await asyncio.sleep(random.random() * 1.5)  # waiting for lock / critical section
-        await asyncio.sleep(1 + random.random() * 3)  # call to external service
-
-        await asyncio.sleep(0.2 + random.random())  # call to database again
+        # query to database / waiting for lock
+        # external service call
+        await asyncio.sleep(2 + random.random() * 2)

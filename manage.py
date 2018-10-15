@@ -7,7 +7,7 @@ import click
 
 from commons.asyncio import run_in_loop
 from commons.redis import get_redis
-from worker.consumers import ConstantSleepConsumer
+from worker.consumers import RandomSleepConsumer
 from worker.processors import QueueProcessor
 from worker.queues import InMemoryQueue, RedisQueue
 from worker.serializers import CreateOrderMessageSerializer
@@ -35,7 +35,7 @@ def setup_signal_handlers(processor: QueueProcessor):
 async def consume_memory_tasks(tasks_number: int, concurrency: int) -> None:
     queue = InMemoryQueue()
     serializer = CreateOrderMessageSerializer()
-    consumer = ConstantSleepConsumer()
+    consumer = RandomSleepConsumer()
     processor = QueueProcessor(queue, serializer, consumer, concurrency=concurrency)
 
     setup_signal_handlers(processor)
@@ -50,7 +50,7 @@ async def consume_redis_tasks(concurrency: int) -> None:
     redis = await get_redis()
     queue = RedisQueue(redis, key='orders')
     serializer = CreateOrderMessageSerializer()
-    consumer = ConstantSleepConsumer()
+    consumer = RandomSleepConsumer()
     processor = QueueProcessor(queue, serializer, consumer, concurrency=concurrency)
 
     setup_signal_handlers(processor)
